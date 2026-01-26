@@ -840,6 +840,13 @@
         ]
       },
       {
+        "group": "Developer",
+        "pages": [
+          "developer-guide",
+          "validation/copilot-usage"
+        ]
+      },
+      {
         "group": "Install & Updates",
         "pages": [
           "install/index",
