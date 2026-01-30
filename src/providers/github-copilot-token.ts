@@ -27,14 +27,31 @@ export function deriveCopilotApiBaseUrlFromToken(token: string): string {
 
 type ResolveOptions = { githubToken: string; fetchImpl: typeof fetch };
 
+interface CachedToken {
+  token: string;
+  expiresAt: number;
+  updatedAt?: number;
+}
+
+function isCachedToken(value: unknown): value is CachedToken {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "token" in value &&
+    typeof (value as CachedToken).token === "string" &&
+    "expiresAt" in value &&
+    typeof (value as CachedToken).expiresAt === "number"
+  );
+}
+
 export async function resolveCopilotApiToken(opts: ResolveOptions) {
   const stateDir = resolveStateDir();
   const cachePath = path.join(stateDir, "github-copilot-token.json");
   const now = Date.now();
 
   try {
-    const cached = await loadJsonFile(cachePath);
-    if (cached && typeof cached.expiresAt === "number" && cached.expiresAt > now) {
+    const cached = loadJsonFile(cachePath);
+    if (isCachedToken(cached) && cached.expiresAt > now) {
       return {
         token: cached.token,
         baseUrl: deriveCopilotApiBaseUrlFromToken(cached.token),
@@ -60,7 +77,7 @@ export async function resolveCopilotApiToken(opts: ResolveOptions) {
   const expiresAt = expires_at * 1000;
 
   try {
-    await saveJsonFile(cachePath, { token, expiresAt, updatedAt: Date.now() });
+    saveJsonFile(cachePath, { token, expiresAt, updatedAt: Date.now() });
   } catch {
     // ignore save errors
   }
